@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace ConnectDB.Models
+namespace phamthicamtien.Model
 {
     public class Supplier
     {

@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using ConnectDB.Models;
+using phamthicamtien.Model;
 
-namespace ConnectDB.Data
+namespace phamthicamtien.Data
 {
     public class AppDbContext : DbContext
     {

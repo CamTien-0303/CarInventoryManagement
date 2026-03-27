@@ -1,4 +1,4 @@
-﻿using ConnectDB.Data;
+﻿using phamthicamtien.Data;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
