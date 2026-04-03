@@ -1,24 +1,22 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using phamthicamtien.Model;
 
 namespace phamthicamtien.Model
 {
     public class VehicleDocument
     {
-        [Key]
         public int DocumentId { get; set; }
 
-        [Required]
-        public string DocumentType { get; set; } = string.Empty; // VAT, Đăng kiểm, Tờ khai HQ
-
-        public string? DocumentNo { get; set; }
-        public DateTime? IssueDate { get; set; }
-
-        // Khóa ngoại nối với Vehicle qua mã VIN
-        [Required]
         public string Vin { get; set; } = string.Empty;
 
-        [ForeignKey("Vin")]
+        public string DocumentType { get; set; } = string.Empty;
+
+        // Đây chính là dòng bị thiếu làm nó báo lỗi nè 👇
+        public string Status { get; set; } = "Pending";
+
+        public DateTime? IssueDate { get; set; }
+
+        public string? FileUrl { get; set; }
+
         public Vehicle? Vehicle { get; set; }
     }
 }

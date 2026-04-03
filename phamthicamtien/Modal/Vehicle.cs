@@ -33,5 +33,15 @@ namespace phamthicamtien.Model
         public int WarehouseId { get; set; }
         [ForeignKey("WarehouseId")]
         public Warehouse? Warehouse { get; set; }
+
+        // ==========================================
+        // PHẦN BỔ SUNG: NAVIGATION PROPERTIES CHO QUAN HỆ 1-NHIỀU
+        // ==========================================
+
+        // 1 chiếc xe có thể có nhiều giao dịch (Nhập, Xuất, Dời kho...)
+        public ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
+
+        // 1 chiếc xe có nhiều loại giấy tờ (Thuế, Hải quan, Kiểm định...)
+        public ICollection<VehicleDocument> Documents { get; set; } = new List<VehicleDocument>();
     }
 }
