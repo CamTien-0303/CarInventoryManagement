@@ -1,9 +1,11 @@
 ﻿using phamthicamtien.Model;
+using System.ComponentModel.DataAnnotations;
 
 namespace phamthicamtien.Model
 {
     public class VehicleDocument
     {
+        [Key]
         public int DocumentId { get; set; }
 
         public string Vin { get; set; } = string.Empty;
