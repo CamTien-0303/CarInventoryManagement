@@ -15,9 +15,15 @@ if (!string.IsNullOrEmpty(databaseUrl))
     // Render cung cấp DATABASE_URL dạng: postgres://user:pass@host:port/dbname
     // Chuyển sang dạng Npgsql connection string
     var uri = new Uri(databaseUrl);
-    var userInfo = uri.UserInfo.Split(':');
+    var userInfo = uri.UserInfo.Split(':', 2); // split tối đa 2 phần (password có thể chứa ':')
+    var host = uri.Host;
+    var dbPort = uri.Port == -1 ? 5432 : uri.Port; // dùng 5432 nếu không có port trong URL
+    var database = uri.AbsolutePath.TrimStart('/');
+    var username = Uri.UnescapeDataString(userInfo[0]);
+    var password = Uri.UnescapeDataString(userInfo[1]); // decode ký tự đặc biệt trong password
+
     var npgsqlConnectionString =
-        $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true";
+        $"Host={host};Port={dbPort};Database={database};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true";
 
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseNpgsql(npgsqlConnectionString));
