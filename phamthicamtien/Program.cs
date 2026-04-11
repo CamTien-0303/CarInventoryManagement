@@ -1,33 +1,76 @@
-﻿using phamthicamtien.Data;
+using phamthicamtien.Data;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// =====================================================
+// DATABASE CONFIGURATION
+// Tự động dùng PostgreSQL khi deploy lên Render (có biến DATABASE_URL)
+// Dùng SQL Server khi chạy local
+// =====================================================
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 
-// Đăng ký AppDbContext vào hệ thống với Connection String đã khai báo
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+if (!string.IsNullOrEmpty(databaseUrl))
+{
+    // Render cung cấp DATABASE_URL dạng: postgres://user:pass@host:port/dbname
+    // Chuyển sang dạng Npgsql connection string
+    var uri = new Uri(databaseUrl);
+    var userInfo = uri.UserInfo.Split(':');
+    var npgsqlConnectionString =
+        $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true";
+
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseNpgsql(npgsqlConnectionString));
+}
+else
+{
+    // Local development: dùng SQL Server
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+}
+
+// =====================================================
+// CORS – cho phép frontend gọi API
+// =====================================================
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 
 builder.Services.AddControllers();
-
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+// =====================================================
+// SWAGGER – bật cả trên production (để test trên Render)
+// =====================================================
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Car Inventory API v1");
+    c.RoutePrefix = string.Empty; // Swagger tại root URL "/"
+});
+
+// Tự động tạo tables khi khởi động (dùng EnsureCreated để tránh lỗi provider)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.EnsureCreated(); // Tạo DB + tables nếu chưa có
 }
 
-app.UseHttpsRedirection();
+app.UseCors("AllowAll");
 
 app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run();
+// Lấy PORT từ biến môi trường của Render
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+app.Run($"http://0.0.0.0:{port}");
