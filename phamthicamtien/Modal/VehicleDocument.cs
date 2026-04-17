@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema; // Thêm dòng này vô để xài ForeignKey
 
 namespace phamthicamtien.Model
@@ -8,10 +8,13 @@ namespace phamthicamtien.Model
         [Key]
         public int DocumentId { get; set; }
 
+        [Required]
         public string Vin { get; set; } = string.Empty;
 
+        [Required]
         public string DocumentType { get; set; } = string.Empty;
 
+        [Required]
         public string Status { get; set; } = "Pending";
 
         public DateTime? IssueDate { get; set; }

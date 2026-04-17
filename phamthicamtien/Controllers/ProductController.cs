@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using phamthicamtien.Data;
 using phamthicamtien.Model;
@@ -20,8 +20,7 @@ namespace phamthicamtien.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
         {
-            // Sử dụng Include để lấy luôn thông tin Supplier nếu cần
-            return await _context.Products.Include(p => p.Supplier).ToListAsync();
+            return await _context.Products.ToListAsync();
         }
 
         // 2. GET: api/Product/5 (Lấy chi tiết 1 sản phẩm)

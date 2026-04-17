@@ -28,9 +28,9 @@ if (!string.IsNullOrEmpty(databaseUrl))
 }
 else
 {
-    // Local development: dùng SQL Server
+    // Local development: dùng Npgsql PostgreSQL
     builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 }
 
 // =====================================================
@@ -75,11 +75,12 @@ app.UseSwaggerUI(c =>
 // =====================================================
 // 4. KHỞI TẠO DATABASE
 // =====================================================
-// Tự động tạo tables khi khởi động (dùng EnsureCreated)
+// Tự động apply migrations khi khởi động
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.EnsureCreated(); // Tạo DB + tables trên PostgreSQL nếu chưa có
+    // Áp dụng migration để tạo Db thay vì EnsureCreated
+    db.Database.Migrate(); 
 }
 
 // =====================================================

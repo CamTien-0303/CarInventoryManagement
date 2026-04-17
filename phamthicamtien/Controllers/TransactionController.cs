@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using phamthicamtien.Data;
 using phamthicamtien.Model;
@@ -17,7 +17,24 @@ namespace phamthicamtien.Controllers
             _context = context;
         }
 
-        // POST: /api/transactions/import
+        // GET: /api/Transaction
+        [HttpGet]
+        public async Task<IActionResult> GetTransactions()
+        {
+            var transactions = await _context.Transactions.ToListAsync();
+            return Ok(transactions);
+        }
+
+        // GET: /api/Transaction/{id}
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetTransaction(long id)
+        {
+            var transaction = await _context.Transactions.FindAsync(id);
+            if (transaction == null) return NotFound("Không tìm thấy giao dịch.");
+            return Ok(transaction);
+        }
+
+        // POST: /api/Transaction/import
         [HttpPost("import")]
         public async Task<IActionResult> ImportVehicle([FromBody] VehicleImportDto dto)
         {
@@ -27,11 +44,24 @@ namespace phamthicamtien.Controllers
             if (await _context.Vehicles.AnyAsync(v => v.Vin == dto.Vin))
                 return Conflict("Lỗi trùng số VIN. Dữ liệu đã tồn tại!");
 
+            // Warehouse validation
+            var warehouse = await _context.Warehouses.FindAsync(dto.WarehouseId);
+            if (warehouse == null) return NotFound("Kho không tồn tại.");
+
+            var currentCount = await _context.Vehicles.CountAsync(v => v.WarehouseId == dto.WarehouseId && (v.Status == "In_stock" || v.Status == "Reserved"));
+            if (currentCount >= warehouse.Capacity)
+            {
+                return BadRequest("Kho đã đầy, không thể nhập thêm xe.");
+            }
+
             var vehicle = new Vehicle
             {
                 Vin = dto.Vin,
+                EngineNumber = dto.EngineNumber,
+                ChassisNumber = dto.ChassisNumber,
                 ProductId = dto.ProductId,
                 WarehouseId = dto.WarehouseId,
+                CurrentLocationDetail = dto.CurrentLocationDetail,
                 Status = "In_stock"
             };
 
@@ -51,7 +81,7 @@ namespace phamthicamtien.Controllers
             return Ok("Nhập kho thành công.");
         }
 
-        // POST: /api/transactions/export
+        // POST: /api/Transaction/export
         [HttpPost("export")]
         public async Task<IActionResult> ExportVehicle([FromBody] ExportRequestDto dto)
         {

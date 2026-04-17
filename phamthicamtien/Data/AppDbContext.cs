@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using phamthicamtien.Model;
 
 namespace phamthicamtien.Data
@@ -12,9 +12,21 @@ namespace phamthicamtien.Data
         public DbSet<Vehicle> Vehicles { get; set; }
         public DbSet<Warehouse> Warehouses { get; set; }
         public DbSet<Transaction> Transactions { get; set; }
-
         public DbSet<Supplier> Suppliers { get; set; }
         public DbSet<Staff> Staffs { get; set; }
         public DbSet<VehicleDocument> VehicleDocuments { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // Vehicle Constraints
+            modelBuilder.Entity<Vehicle>(entity =>
+            {
+                entity.HasKey(e => e.Vin);
+                entity.HasIndex(e => e.EngineNumber).IsUnique();
+                entity.HasIndex(e => e.ChassisNumber).IsUnique();
+            });
+        }
     }
 }

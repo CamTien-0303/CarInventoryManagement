@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace phamthicamtien.Model
@@ -15,7 +15,6 @@ namespace phamthicamtien.Model
         [Required]
         public string ChassisNumber { get; set; } = string.Empty;
 
-        public string Color { get; set; } = string.Empty;
 
         // Trạng thái: In_Stock, Reserved, Sold
         public string Status { get; set; } = "In_Stock";

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using phamthicamtien.Data;
 
@@ -15,18 +15,24 @@ namespace phamthicamtien.Controllers
             _context = context;
         }
 
-        // GET: /api/reports/inventory-aging
+        // GET: /api/Report/inventory-aging
         [HttpGet("inventory-aging")]
         public async Task<IActionResult> GetInventoryAging(int alertDays = 90)
         {
             var today = DateTime.Now;
 
             var agingVehicles = await _context.Vehicles
-                .Where(v => v.Status == "In_stock")
+                .Include(v => v.Product)
+                .Include(v => v.Warehouse)
+                .Where(v => v.Status == "In_stock" || v.Status == "Reserved")
                 .Select(v => new
                 {
-                    v.Vin,
-                    v.CurrentLocationDetail,
+                    vin = v.Vin,
+                    brand = v.Product != null ? v.Product.Brand : "N/A",
+                    model_name = v.Product != null ? v.Product.ModelName : "N/A",
+                    warehouse_name = v.Warehouse != null ? v.Warehouse.Name : "N/A",
+                    status = v.Status,
+                    current_location_detail = v.CurrentLocationDetail,
                     ImportDate = _context.Transactions
                         .Where(t => t.Vin == v.Vin && t.Type == "Import")
                         .Select(t => t.TransactionDate)
@@ -37,12 +43,16 @@ namespace phamthicamtien.Controllers
             var result = agingVehicles
                 .Select(v => new
                 {
-                    v.Vin,
-                    v.CurrentLocationDetail,
-                    DaysInStock = v.ImportDate != default ? (today - v.ImportDate).Days : 0,
-                    NeedsMaintenance = v.ImportDate != default && (today - v.ImportDate).Days > alertDays
+                    v.vin,
+                    v.brand,
+                    v.model_name,
+                    v.warehouse_name,
+                    v.status,
+                    v.current_location_detail,
+                    days_in_inventory = v.ImportDate != default ? (today - v.ImportDate).Days : 0,
+                    needs_maintenance = v.ImportDate != default && (today - v.ImportDate).Days > alertDays
                 })
-                .OrderByDescending(v => v.DaysInStock)
+                .OrderByDescending(v => v.days_in_inventory)
                 .ToList();
 
             return Ok(result);

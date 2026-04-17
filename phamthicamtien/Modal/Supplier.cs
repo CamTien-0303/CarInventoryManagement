@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace phamthicamtien.Model
 {
@@ -9,13 +9,9 @@ namespace phamthicamtien.Model
 
         [Required]
         [StringLength(200)]
-        public string Name { get; set; } = string.Empty;
+        public string SupplierName { get; set; } = string.Empty;
 
-        public string? Address { get; set; }
-        public string? ContactPerson { get; set; }
-        public string? Phone { get; set; }
-
-        // Một nhà cung cấp có thể cung cấp nhiều mẫu xe (Product)
-        public ICollection<Product>? Products { get; set; }
+        [Required]
+        public string ContactInfo { get; set; } = string.Empty;
     }
 }

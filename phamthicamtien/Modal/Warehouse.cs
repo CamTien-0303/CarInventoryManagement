@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace phamthicamtien.Model
 {
@@ -11,8 +11,11 @@ namespace phamthicamtien.Model
         [StringLength(200)]
         public string Name { get; set; } = string.Empty;
 
-        public string? Address { get; set; }
+        [Required]
+        public string Address { get; set; } = string.Empty;
 
+        [Required]
+        [Range(0, int.MaxValue)]
         public int Capacity { get; set; }
 
         // Quan hệ: Một kho có thể chứa nhiều xe
