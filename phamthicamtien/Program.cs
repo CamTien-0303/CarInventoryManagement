@@ -79,6 +79,8 @@ app.UseSwaggerUI(c =>
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    // Xóa database cũ để tránh xung đột bảng cũ trên Render
+    db.Database.EnsureDeleted();
     // Áp dụng migration để tạo Db thay vì EnsureCreated
     db.Database.Migrate(); 
 }
