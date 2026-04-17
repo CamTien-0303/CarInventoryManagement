@@ -3,11 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// =====================================================
-// DATABASE CONFIGURATION
-// Tự động dùng PostgreSQL khi deploy lên Render (có biến DATABASE_URL)
-// Dùng SQL Server khi chạy local
-// =====================================================
+
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 
 if (!string.IsNullOrEmpty(databaseUrl))
@@ -15,12 +11,14 @@ if (!string.IsNullOrEmpty(databaseUrl))
     // Render cung cấp DATABASE_URL dạng: postgres://user:pass@host:port/dbname
     // Chuyển sang dạng Npgsql connection string
     var uri = new Uri(databaseUrl);
-    var userInfo = uri.UserInfo.Split(':', 2); // split tối đa 2 phần (password có thể chứa ':')
+    var userInfo = uri.UserInfo.Split(':', 2);
+
     var host = uri.Host;
-    var dbPort = uri.Port == -1 ? 5432 : uri.Port; // dùng 5432 nếu không có port trong URL
+    var dbPort = uri.Port == -1 ? 5432 : uri.Port;
     var database = uri.AbsolutePath.TrimStart('/');
     var username = Uri.UnescapeDataString(userInfo[0]);
-    var password = Uri.UnescapeDataString(userInfo[1]); // decode ký tự đặc biệt trong password
+    // Thêm check độ dài để tránh lỗi IndexOutOfRange nếu mật khẩu bị khuyết
+    var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
 
     var npgsqlConnectionString =
         $"Host={host};Port={dbPort};Database={database};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true";
@@ -36,7 +34,7 @@ else
 }
 
 // =====================================================
-// CORS – cho phép frontend gọi API
+// 2. CORS – Cho phép frontend gọi API
 // =====================================================
 builder.Services.AddCors(options =>
 {
@@ -48,43 +46,54 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Cấu hình Controller và Json để tránh lỗi lặp vòng
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        // Ngăn lỗi 500 do circular reference khi Include navigation properties
         options.JsonSerializerOptions.ReferenceHandler =
             System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
         options.JsonSerializerOptions.DefaultIgnoreCondition =
             System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
     });
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
 // =====================================================
-// SWAGGER – bật cả trên production (để test trên Render)
+// 3. SWAGGER – Bật trên mọi môi trường (kể cả Render)
 // =====================================================
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Car Inventory API v1");
-    c.RoutePrefix = string.Empty; // Swagger tại root URL "/"
+    // Swagger sẽ hiện ngay ở trang chủ (vd: https://your-api.onrender.com/)
+    c.RoutePrefix = string.Empty;
 });
 
-// Tự động tạo tables khi khởi động (dùng EnsureCreated để tránh lỗi provider)
+// =====================================================
+// 4. KHỞI TẠO DATABASE
+// =====================================================
+// Tự động tạo tables khi khởi động (dùng EnsureCreated)
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.EnsureCreated(); // Tạo DB + tables nếu chưa có
+    db.Database.EnsureCreated(); // Tạo DB + tables trên PostgreSQL nếu chưa có
 }
 
+// =====================================================
+// 5. MIDDLEWARE PIPELINE
+// =====================================================
 app.UseCors("AllowAll");
 
 app.UseAuthorization();
 
 app.MapControllers();
 
-// Lấy PORT từ biến môi trường của Render
+// =====================================================
+// 6. RENDER PORT BINDING
+// =====================================================
+// Lấy PORT từ biến môi trường của Render, mặc định 8080 nếu chạy local
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 app.Run($"http://0.0.0.0:{port}");
