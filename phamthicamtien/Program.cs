@@ -68,8 +68,11 @@ app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Car Inventory API v1");
-    // Swagger sẽ hiện ngay ở trang chủ (vd: https://your-api.onrender.com/)
-    c.RoutePrefix = string.Empty;
+    // Trên Render: Swagger ở trang chủ. Local: ở /swagger (khớp launchSettings)
+    if (!app.Environment.IsDevelopment())
+    {
+        c.RoutePrefix = string.Empty;
+    }
 });
 
 // =====================================================
@@ -81,6 +84,9 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     // Áp dụng migration để tạo Db thay vì EnsureCreated
     db.Database.Migrate(); 
+
+    // Bổ sung seed data
+    DbSeeder.Seed(db);
 }
 
 // =====================================================
@@ -95,6 +101,14 @@ app.MapControllers();
 // =====================================================
 // 6. RENDER PORT BINDING
 // =====================================================
-// Lấy PORT từ biến môi trường của Render, mặc định 8080 nếu chạy local
-var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
-app.Run($"http://0.0.0.0:{port}");
+var renderPort = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrEmpty(renderPort))
+{
+    // Trên Render: bind vào port mà Render cung cấp
+    app.Run($"http://0.0.0.0:{renderPort}");
+}
+else
+{
+    // Local development: dùng port từ launchSettings.json (5065)
+    app.Run();
+}

@@ -57,5 +57,31 @@ namespace phamthicamtien.Controllers
 
             return Ok(result);
         }
+
+        // GET: /api/Report/summary
+        [HttpGet("summary")]
+        public async Task<IActionResult> GetSummary()
+        {
+            var totalProducts = await _context.Products.CountAsync();
+            var totalVehicles = await _context.Vehicles.CountAsync();
+            var inStock = await _context.Vehicles.CountAsync(v => v.Status == "In_stock" || v.Status == "In_Stock");
+            var reserved = await _context.Vehicles.CountAsync(v => v.Status == "Reserved");
+            var sold = await _context.Vehicles.CountAsync(v => v.Status == "Sold");
+            var totalWarehouses = await _context.Warehouses.CountAsync();
+            var totalStaff = await _context.Staffs.CountAsync();
+
+            var result = new
+            {
+                totalProducts,
+                totalVehicles,
+                inStock,
+                reserved,
+                sold,
+                totalWarehouses,
+                totalStaff
+            };
+
+            return Ok(result);
+        }
     }
 }
