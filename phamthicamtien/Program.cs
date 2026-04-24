@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Bật cờ hỗ trợ DateTime.Now (Local) trong PostgreSQL
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 
